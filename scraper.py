@@ -248,6 +248,7 @@ def getNewCommentText(browser):
       print("matches found ")
       for m in matches:
         print (m)
+        print(match.find_element_by_xpath(".//div[contains(@style,'text-align: start;')]").text)
       return True
     except StaleElementReferenceException:
       print("StaleElementReferenceException")

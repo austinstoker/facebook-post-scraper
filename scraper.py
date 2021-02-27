@@ -231,7 +231,9 @@ def attemptClickByXpath(browser, desc, xpath):
 
 
 def clickViewPreviousComments(browser):
-  return attemptClickByXpath(browser,"View previous comments", "//*[contains(text(), 'View previous comments')]")
+  prev = attemptClickByXpath(browser,"View previous comments", "//*[contains(text(), 'View previous comments')]")
+  more = attemptClickByXpath(browser,"More comments", "//*[contains(text(), 'more comments')]")
+  return prev or more
 
 def expandComments(browser):
   return attemptClickByXpath(browser,"See more","//*[contains(text(), 'See More')]")
@@ -278,6 +280,8 @@ def saveResultsResults(path, browser, listOfComments):
 
     # Throw your source into BeautifulSoup and start parsing!
     bs_data = bs(source_data, 'html.parser')
+    with open('./pagePartialSnapshot.html',"w", encoding="utf-8") as file:
+        file.write(str(bs_data.prettify()))
 
 def extract(page):
     option = Options()
@@ -302,6 +306,10 @@ def extract(page):
     setOfKnownComments = set()
     listOfComments = list()
 
+    expandComments(browser)
+    browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
+    getNewCommentText(browser, setOfKnownComments, listOfComments)
+
     while(clickViewPreviousComments(browser)):
       howManyCommentPages += 1
       while(expandComments(browser)):
@@ -322,7 +330,7 @@ def extract(page):
 
     browser.close()
 
-    return postBigDict
+    return
 
 
 if __name__ == "__main__":
@@ -330,6 +338,6 @@ if __name__ == "__main__":
     required_parser = parser.add_argument_group("required arguments")
     required_parser.add_argument('-page', '-p', help="The Facebook Public Page you want to scrape", required=True)
     args = parser.parse_args()
-    postBigDict = extract(page=args.page)
+    extract(page=args.page)
 
     print("Finished")

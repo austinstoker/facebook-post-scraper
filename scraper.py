@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup as bs
 #from selenium.webdriver.common.action_chains import ActionChains 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import ElementNotInteractableException
 from selenium.webdriver.common.keys import Keys
 
 with open('facebook_credentials.txt') as file:
@@ -43,6 +44,9 @@ def attemptClickByXpath(browser, desc, xpath):
     except NoSuchElementException:
       print("NoSuchElementException")
       return False
+    except ElementNotInteractableException:
+      print("ElementNotInteractableException")
+      return False
     except:
       print("Unhandled Exception")
       e = sys.exc_info()[0]
@@ -57,10 +61,18 @@ def clickViewPreviousComments(browser):
 def expandComments(browser):
   return attemptClickByXpath(browser,"See more","//*[contains(text(), 'See More')]")
 
+def expandReplies(browser):
+  return attemptClickByXpath(browser,"Replies","//*[(contains(text(), 'Replies') or contains(text(), 'more replies') or contains(text(), 'more reply')) and not(contains(text(), 'Hide'))]")
+
+def expandCommentsAndReplies(browser):
+  comments = expandComments(browser) 
+  replies = expandReplies(browser)
+  return comments or replies
+
 def getNewCommentText(browser, setOfKnownComments, listOfComments):
   # try:
     print("searching for Comments")
-    matches = browser.find_elements_by_xpath("//*[starts-with(@aria-label, 'Comment by')]")
+    matches = browser.find_elements_by_xpath("//*[starts-with(@aria-label, 'Comment by') or starts-with(@aria-label, 'Reply by')]")
     if not matches:
       print("no match for ")
       return False
@@ -124,13 +136,14 @@ def extract(page):
     setOfKnownComments = set()
     listOfComments = list()
 
-    expandComments(browser)
+    while(expandCommentsAndReplies(browser)):
+        howManyCommentsExpanded+=1
     browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
     getNewCommentText(browser, setOfKnownComments, listOfComments)
 
     while(clickViewPreviousComments(browser)):
       howManyCommentPages += 1
-      while(expandComments(browser)):
+      while(expandCommentsAndReplies(browser)):
         howManyCommentsExpanded+=1
       browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
       getNewCommentText(browser, setOfKnownComments, listOfComments)
@@ -143,8 +156,6 @@ def extract(page):
     print ("Comments expanded:")
     print (howManyCommentsExpanded)
     saveResultsResults("finalResults.txt", browser, listOfComments)
-
-    time.sleep(90)
 
     browser.close()
 

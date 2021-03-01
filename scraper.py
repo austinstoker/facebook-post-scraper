@@ -66,7 +66,7 @@ def expandReplies(browser):
 
 def expandCommentsAndReplies(browser):
   comments = expandComments(browser) 
-  replies = expandReplies(browser)
+  replies = False #expandReplies(browser)
   return comments or replies
 
 def getNewCommentText(browser, setOfKnownComments, listOfComments):
